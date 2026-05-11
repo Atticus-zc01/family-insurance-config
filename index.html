@@ -1279,7 +1279,9 @@ function resetAll() {
 //  初始化
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // 加载已有数据到页面2-5
+  // 每次加载页面时清空旧数据，确保每次打开都是全新填写
+  localStorage.removeItem('insuranceData');
+  // 加载默认数据（全部为空）
   for (let i = 1; i <= 4; i++) {
     loadPage(i);
   }
