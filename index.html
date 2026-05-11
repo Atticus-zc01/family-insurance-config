@@ -353,10 +353,10 @@ select { appearance: auto; }
           <td style="text-align:center;"><input type="checkbox" id="h_parent_highmed" onchange="savePage(2)"></td>
         </tr>
         <tr><td style="padding:6px 8px;">重疾险</td>
-          <td style="text-align:center;"><input type="checkbox" id="h_p1_ci" onchange="savePage(2)"></td>
-          <td style="text-align:center;"><input type="checkbox" id="h_p2_ci" onchange="savePage(2)"></td>
-          <td style="text-align:center;"><input type="checkbox" id="h_child_ci" onchange="savePage(2)"></td>
-          <td style="text-align:center;"><input type="checkbox" id="h_parent_ci" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p1_ci" onchange="toggleCIDetail(); savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p2_ci" onchange="toggleCIDetail(); savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_child_ci" onchange="toggleCIDetail(); savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_parent_ci" onchange="toggleCIDetail(); savePage(2)"></td>
         </tr>
         <tr><td style="padding:6px 8px;">意外险</td>
           <td style="text-align:center;"><input type="checkbox" id="h_p1_acc" onchange="savePage(2)"></td>
@@ -369,7 +369,7 @@ select { appearance: auto; }
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="ciDetailCard">
     <div class="card-title"><span class="icon">📋</span> 重疾险详情</div>
 
     <div class="form-group">
@@ -400,16 +400,33 @@ select { appearance: auto; }
     <div class="card-title"><span class="icon">⚙️</span> 保障偏好</div>
 
     <div class="form-group">
-      <label class="form-label">重疾险保障期偏好</label>
-      <select id="ci_term_pref" onchange="savePage(2)">
+      <label class="form-label">第一经济支柱 - 重疾险保障期偏好</label>
+      <select id="p1_ci_term_pref" onchange="savePage(2)">
         <option value="70">保至70岁（性价比优先）</option>
         <option value="终身">保终身（全面保障）</option>
       </select>
     </div>
 
     <div class="form-group">
-      <label class="form-label">医疗险保障期偏好</label>
-      <select id="med_term_pref" onchange="savePage(2)">
+      <label class="form-label">第一经济支柱 - 医疗险保障期偏好</label>
+      <select id="p1_med_term_pref" onchange="savePage(2)">
+        <option value="1年">一年期（灵活）</option>
+        <option value="20年">20年保证续保</option>
+        <option value="终身">终身保证续保</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="p2_ci_term_group">
+      <label class="form-label">第二经济支柱 - 重疾险保障期偏好</label>
+      <select id="p2_ci_term_pref" onchange="savePage(2)">
+        <option value="70">保至70岁（性价比优先）</option>
+        <option value="终身">保终身（全面保障）</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="p2_med_term_group">
+      <label class="form-label">第二经济支柱 - 医疗险保障期偏好</label>
+      <select id="p2_med_term_pref" onchange="savePage(2)">
         <option value="1年">一年期（灵活）</option>
         <option value="20年">20年保证续保</option>
         <option value="终身">终身保证续保</option>
@@ -464,12 +481,24 @@ select { appearance: auto; }
 
     <div class="form-group">
       <label class="form-label">第一经济支柱 - 年度寿险预算（元）</label>
-      <input type="number" id="p1_life_budget" min="0" step="100" value="2000" onchange="savePage(3)">
+      <select id="p1_life_budget" onchange="savePage(3)">
+        <option value="500">500元以内</option>
+        <option value="1500" selected>500-2000元</option>
+        <option value="3500">2000-5000元</option>
+        <option value="7500">5000-10000元</option>
+        <option value="15000">10000元以上</option>
+      </select>
     </div>
 
     <div class="form-group">
       <label class="form-label">第二经济支柱 - 年度寿险预算（元）</label>
-      <input type="number" id="p2_life_budget" min="0" step="100" value="1000" onchange="savePage(3)">
+      <select id="p2_life_budget" onchange="savePage(3)">
+        <option value="500">500元以内</option>
+        <option value="1500" selected>500-2000元</option>
+        <option value="3500">2000-5000元</option>
+        <option value="7500">5000-10000元</option>
+        <option value="15000">10000元以上</option>
+      </select>
     </div>
   </div>
 
@@ -628,7 +657,7 @@ select { appearance: auto; }
     </div>
 
     <div class="form-group">
-      <label class="form-label">计划缴费年限</label>
+      <label class="form-label">第一经济支柱 - 计划缴费年限</label>
       <input type="number" id="p1_pension_years" min="1" max="30" value="20" onchange="savePage(4)">
     </div>
 
@@ -772,6 +801,14 @@ function prevPage() {
 // ============================================================
 //  条件显示逻辑
 // ============================================================
+function toggleCIDetail() {
+  const hasCI = document.getElementById('h_p1_ci').checked ||
+                document.getElementById('h_p2_ci').checked ||
+                document.getElementById('h_child_ci').checked ||
+                document.getElementById('h_parent_ci').checked;
+  document.getElementById('ciDetailCard').classList.toggle('hidden', !hasCI);
+}
+
 function toggleP2() {
   const val = document.getElementById('p2Exist').value;
   const hasP2 = val && val !== 'no' && val !== '';
@@ -779,7 +816,6 @@ function toggleP2() {
   document.getElementById('p2_ci_group').classList.toggle('hidden', !hasP2);
   document.getElementById('p2_life_group').classList.toggle('hidden', !hasP2);
 
-  // 养老金的第二支柱字段
   document.getElementById('p2_retire_group').classList.toggle('hidden', !hasP2);
   document.getElementById('p2_retire_years_group').classList.toggle('hidden', !hasP2);
   document.getElementById('p2_retire_goal_group').classList.toggle('hidden', !hasP2);
@@ -790,6 +826,12 @@ function toggleP2() {
   document.getElementById('p2_pension_social_group').classList.toggle('hidden', !hasP2);
   document.getElementById('p2_pension_years_group').classList.toggle('hidden', !hasP2);
   document.getElementById('p2_pension_budget_group').classList.toggle('hidden', !hasP2);
+
+  // 保障偏好中的第二支柱字段
+  const p2ciGroup = document.getElementById('p2_ci_term_group');
+  const p2medGroup = document.getElementById('p2_med_term_group');
+  if (p2ciGroup) p2ciGroup.classList.toggle('hidden', !hasP2);
+  if (p2medGroup) p2medGroup.classList.toggle('hidden', !hasP2);
 }
 
 // ============================================================
@@ -1153,15 +1195,15 @@ function renderMemberSection(title, member, r) {
   let html = `<div class="result-member"><h3>👤 ${title}</h3>`;
 
   // 重疾险
-  html += `<div class="result-section"><strong style="font-size:14px;color:#475569;">🏥 重疾险</strong>`;
-  html += `<div class="result-row"><span class="label">建议保额</span><span class="value">${member.ci.recommend}万元</span></div>`;
-  html += `<div class="result-row"><span class="label">已有保额</span><span class="value">${member.ci.existing}万元</span></div>`;
-  html += `<div class="result-row"><span class="label">保额缺口</span><span class="value ${member.ci.gap > 0 ? 'gap' : 'sufficient'}">${member.ci.gap}万元</span></div>`;
+  html += `<div class="result-section"><strong style="font-size:14px;color:#475569;">🏥 健康险</strong>`;
+  html += `<div class="result-row"><span class="label">重疾险建议保额</span><span class="value">${member.ci.recommend}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">重疾险已有保额</span><span class="value">${member.ci.existing}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">重疾险保险缺口</span><span class="value ${member.ci.gap > 0 ? 'gap' : 'sufficient'}">${member.ci.gap}万元</span></div>`;
   html += `<div class="result-row"><span class="label">医疗险建议</span><span class="value">${member.med.type}</span></div>`;
   html += `<div class="result-row"><span class="label">意外险</span><span class="value">${member.acc.note}</span></div>`;
   html += `<div class="result-row"><span class="label">预估年保费</span><span class="value">${member.premium.ci.toLocaleString()}元</span></div>`;
   if (member.premium.ci > 0) {
-    html += `<div class="result-row"><span class="label">预算检验</span><span class="value ${member.premium.ci * 0.3 <= r.budget.health ? 'sufficient' : 'gap'}">${member.premium.ci.toLocaleString()}元 / ${r.budget.health.toLocaleString()}元预算</span></div>`;
+    html += `<div class="result-row"><span class="label">预算检验</span><span class="value ${member.premium.ci * 0.3 <= r.budget.health ? 'sufficient' : 'gap'}">${member.premium.ci.toLocaleString()}元 / 健康险预算 ${r.budget.health.toLocaleString()}元</span></div>`;
   }
   html += `</div>`;
 
@@ -1213,6 +1255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPage(i);
   }
   toggleP2();
+  toggleCIDetail();
 });
 </script>
 </body>
