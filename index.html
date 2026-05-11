@@ -876,7 +876,7 @@ function calcResults() {
 
   // ---- 基本信息 ----
   const p1Age = selectNum('p1Age', 35);
-  const p2Age = selectNum('p2Age', 35);
+  const p2Age = hasP2 ? selectNum('p2Exist', 35) : 35;
   const p1Income = selectNum('p1Income', 22.5);
   const p2Income = selectNum('p2Income', 7.5);
   const children = selectNum('children', 0);
