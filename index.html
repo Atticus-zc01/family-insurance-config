@@ -876,12 +876,12 @@ function calcResults() {
 
   // ---- 基本信息 ----
   const p1Age = selectNum('p1Age', 35);
+  const hasP2 = d.p2Exist && d.p2Exist !== 'no' && d.p2Exist !== '';
   const p2Age = hasP2 ? selectNum('p2Exist', 35) : 35;
   const p1Income = selectNum('p1Income', 22.5);
   const p2Income = selectNum('p2Income', 7.5);
   const children = selectNum('children', 0);
   const parents = selectNum('parents', 0);
-  const hasP2 = d.p2Exist && d.p2Exist !== 'no' && d.p2Exist !== '';
   const mortgage = selectNum('mortgage', 0);
   const bankDep = selectNum('bankDeposit', 2.5);
   const lowRisk = selectNum('lowRiskInvest', 0);
