@@ -762,6 +762,7 @@ function loadPage(pageIdx) {
   });
   // 触发条件显示逻辑
   toggleP2();
+  if (pageIdx === 2) toggleCIDetail();
 }
 
 // ============================================================
@@ -1154,9 +1155,10 @@ function calcResults() {
 //  结果渲染
 // ============================================================
 function renderResults() {
-  const r = calcResults();
-  const container = document.getElementById('resultContent');
-  let html = '';
+  try {
+    const r = calcResults();
+    const container = document.getElementById('resultContent');
+    let html = '';
 
   // ---- 家庭摘要 ----
   html += `<div class="card"><div class="card-title"><span class="icon">📋</span> 家庭信息摘要</div>`;
@@ -1218,6 +1220,10 @@ function renderResults() {
   </div>`;
 
   container.innerHTML = html;
+  } catch (e) {
+    document.getElementById('resultContent').innerHTML =
+      `<div class="card"><div class="result-warning">⚠️ 渲染出错: ${e.message}<br>${e.stack}</div></div>`;
+  }
 }
 
 function renderMemberSection(title, member, r) {
