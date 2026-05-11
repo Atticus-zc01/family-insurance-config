@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家庭保险配置缺口测算</title>
+<style>
+/* ===== 全局重置 ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+
+/* ===== 进度条 ===== */
+.progress-bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #fff; border-bottom: 1px solid #e8ecf1; position: sticky; top: 0; z-index: 100; overflow-x: auto; }
+.progress-step { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.progress-dot { width: 28px; height: 28px; border-radius: 50%; background: #d0d5dd; color: #fff; font-size: 13px; display: flex; align-items: center; justify-content: center; font-weight: 600; transition: all 0.3s; }
+.progress-step.active .progress-dot { background: #2563eb; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+.progress-step.done .progress-dot { background: #16a34a; }
+.progress-label { font-size: 11px; margin-top: 4px; color: #999; white-space: nowrap; }
+.progress-step.active .progress-label { color: #2563eb; font-weight: 600; }
+.progress-step.done .progress-label { color: #16a34a; }
+.progress-line { flex: 1; height: 2px; background: #d0d5dd; margin: 0 4px; min-width: 16px; }
+.progress-line.done { background: #16a34a; }
+
+/* ===== 页面容器 ===== */
+.page { display: none; max-width: 720px; margin: 0 auto; padding: 24px 20px 100px; }
+.page.active { display: block; }
+
+/* ===== 卡片 ===== */
+.card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.card-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; display: flex; align-items: center; gap: 8px; }
+.card-title .icon { font-size: 20px; }
+
+/* ===== 表单元素 ===== */
+.form-group { margin-bottom: 18px; }
+.form-label { display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.form-label .hint { font-weight: 400; color: #999; font-size: 12px; margin-left: 4px; }
+.form-label .tooltip-icon { display: inline-block; width: 16px; height: 16px; background: #d0d5dd; color: #fff; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; cursor: help; margin-left: 4px; position: relative; }
+.form-label .tooltip-icon:hover .tooltip-text { display: block; }
+.tooltip-text { display: none; position: absolute; background: #1e293b; color: #fff; font-size: 12px; padding: 8px 12px; border-radius: 6px; width: 240px; left: 24px; top: -8px; z-index: 10; font-weight: 400; line-height: 1.5; }
+input[type="number"], input[type="text"], select { width: 100%; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: border-color 0.2s; background: #fff; }
+input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+select { appearance: auto; }
+
+/* 单选/复选框组 */
+.option-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.option-group.vertical { flex-direction: column; }
+.option-btn { position: relative; }
+.option-btn input { position: absolute; opacity: 0; }
+.option-btn label { display: block; padding: 8px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s; background: #fff; }
+.option-btn input:checked + label { border-color: #2563eb; background: #eff6ff; color: #2563eb; font-weight: 600; }
+.option-btn label:hover { border-color: #93c5fd; }
+.option-btn input[type="checkbox"]:checked + label { border-color: #2563eb; background: #eff6ff; color: #2563eb; font-weight: 600; }
+
+/* 内联选项组 */
+.inline-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 成员表格样式 */
+.member-row { display: grid; grid-template-columns: 100px 1fr; gap: 12px; align-items: center; margin-bottom: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; }
+.member-label { font-weight: 600; font-size: 14px; color: #475569; }
+
+/* ===== 按钮 ===== */
+.btn-group { display: flex; gap: 12px; justify-content: space-between; margin-top: 24px; position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 20px; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-top: 1px solid #e8ecf1; z-index: 100; max-width: 720px; margin-left: auto; margin-right: auto; }
+.btn { padding: 12px 28px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-prev { background: #f1f5f9; color: #64748b; }
+.btn-prev:hover { background: #e2e8f0; }
+.btn-next { background: #2563eb; color: #fff; flex: 1; }
+.btn-next:hover { background: #1d4ed8; }
+.btn-save { background: #16a34a; color: #fff; }
+.btn-save:hover { background: #15803d; }
+.btn-start { background: #2563eb; color: #fff; padding: 16px 48px; font-size: 18px; border-radius: 12px; }
+.btn-start:hover { background: #1d4ed8; }
+
+/* ===== 欢迎页 ===== */
+.welcome { text-align: center; padding-top: 60px; }
+.welcome h1 { font-size: 28px; color: #1e293b; margin-bottom: 12px; }
+.welcome p { color: #64748b; font-size: 16px; margin-bottom: 8px; line-height: 1.8; }
+.welcome .features { text-align: left; display: inline-block; margin: 24px auto; }
+.welcome .features li { margin-bottom: 10px; color: #475569; font-size: 14px; list-style: none; }
+.welcome .features li::before { content: "✓ "; color: #16a34a; font-weight: 700; }
+
+/* ===== 结果页 ===== */
+.result-section { margin-bottom: 24px; }
+.result-member { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.result-member h3 { font-size: 16px; color: #2563eb; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e8ecf1; }
+.result-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; border-bottom: 1px dashed #f1f5f9; }
+.result-row .label { color: #64748b; }
+.result-row .value { font-weight: 600; color: #1e293b; }
+.result-row .value.gap { color: #dc2626; }
+.result-row .value.sufficient { color: #16a34a; }
+.result-highlight { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 13px; color: #166534; }
+.result-warning { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 13px; color: #991b1b; }
+.budget-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.budget-item { background: #f8fafc; border-radius: 8px; padding: 16px; text-align: center; }
+.budget-item .amount { font-size: 24px; font-weight: 700; color: #1e293b; }
+.budget-item .amount.over { color: #dc2626; }
+.budget-item .amount.ok { color: #16a34a; }
+.budget-item .desc { font-size: 13px; color: #64748b; margin-top: 4px; }
+.result-actions { display: flex; gap: 12px; justify-content: center; margin: 24px 0; }
+.result-actions .btn { flex: 0 1 auto; }
+
+/* ===== 条件隐藏 ===== */
+.hidden { display: none !important; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 480px) {
+  .page { padding: 16px 12px 100px; }
+  .card { padding: 16px; }
+  .member-row { grid-template-columns: 1fr; gap: 6px; }
+  .progress-label { font-size: 10px; }
+  .progress-dot { width: 24px; height: 24px; font-size: 11px; }
+  .budget-summary { grid-template-columns: 1fr; }
+}
+
+/* ===== 欢迎页Logo/装饰 ===== */
+.welcome-logo { font-size: 48px; margin-bottom: 16px; }
+
+/* checkbox 网格样式 */
+.checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 480px) { .checkbox-grid { grid-template-columns: 1fr; } }
+.checkbox-grid .option-btn label { text-align: center; }
+
+/* 金额显示 */
+.amount-display { font-size: 24px; font-weight: 700; color: #2563eb; text-align: center; padding: 12px; background: #eff6ff; border-radius: 8px; margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<!-- ===== 进度条 ===== -->
+<div class="progress-bar" id="progressBar">
+  <div class="progress-step active" data-step="0">
+    <div class="progress-dot">1</div>
+    <div class="progress-label">欢迎</div>
+  </div>
+  <div class="progress-line" data-between="0-1"></div>
+  <div class="progress-step" data-step="1">
+    <div class="progress-dot">2</div>
+    <div class="progress-label">家庭信息</div>
+  </div>
+  <div class="progress-line" data-between="1-2"></div>
+  <div class="progress-step" data-step="2">
+    <div class="progress-dot">3</div>
+    <div class="progress-label">健康险</div>
+  </div>
+  <div class="progress-line" data-between="2-3"></div>
+  <div class="progress-step" data-step="3">
+    <div class="progress-dot">4</div>
+    <div class="progress-label">寿险</div>
+  </div>
+  <div class="progress-line" data-between="3-4"></div>
+  <div class="progress-step" data-step="4">
+    <div class="progress-dot">5</div>
+    <div class="progress-label">养老金</div>
+  </div>
+  <div class="progress-line" data-between="4-5"></div>
+  <div class="progress-step" data-step="5">
+    <div class="progress-dot">6</div>
+    <div class="progress-label">结果</div>
+  </div>
+</div>
+
+<!-- ===== 页面1：欢迎页 ===== -->
+<div class="page active" id="page0">
+  <div class="welcome">
+    <div class="welcome-logo">🏠</div>
+    <h1>家庭保险配置缺口测算</h1>
+    <p>只需6步，为您生成量身定制的<br>家庭保障配置建议</p>
+    <ul class="features">
+      <li>家庭成员信息采集与画像分析</li>
+      <li>健康险缺口测算与配置建议</li>
+      <li>寿险保额缺口测算</li>
+      <li>养老金缺口测算与补充方案</li>
+      <li>预算约束下的最优配置</li>
+    </ul>
+    <button class="btn btn-start" onclick="goToPage(1)">开始填写 →</button>
+  </div>
+</div>
+
+<!-- ===== 页面2：家庭信息 ===== -->
+<div class="page" id="page1">
+  <div class="card">
+    <div class="card-title"><span class="icon">👤</span> 家庭核心成员信息</div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱年龄</label>
+      <select id="p1Age" onchange="savePage(1)">
+        <option value="">请选择</option>
+        <option value="25">25-30岁</option>
+        <option value="35">31-40岁</option>
+        <option value="45">41-50岁</option>
+        <option value="55">51-60岁</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第二经济支柱
+        <span class="hint">（如无请选"无第二支柱"）</span>
+      </label>
+      <select id="p2Exist" onchange="toggleP2(); savePage(1)">
+        <option value="">请选择</option>
+        <option value="no">无第二支柱</option>
+        <option value="25">25-30岁</option>
+        <option value="35">31-40岁</option>
+        <option value="45">41-50岁</option>
+        <option value="55">51-60岁</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱年税后收入</label>
+      <select id="p1Income" onchange="savePage(1)">
+        <option value="">请选择</option>
+        <option value="7.5">15万以下</option>
+        <option value="22.5">15-30万</option>
+        <option value="45">30-60万</option>
+        <option value="80">60-100万</option>
+        <option value="150">100万以上</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="p2IncomeGroup">
+      <label class="form-label">第二经济支柱年税后收入</label>
+      <select id="p2Income" onchange="savePage(1)">
+        <option value="">请选择</option>
+        <option value="0">无收入/全职在家</option>
+        <option value="7.5">15万以下</option>
+        <option value="22.5">15-30万</option>
+        <option value="45">30万以上</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">家庭收入稳定性</label>
+      <select id="incomeStability" onchange="savePage(1)">
+        <option value="">请选择</option>
+        <option value="stable">非常稳定（公务员/事业单位/国企）</option>
+        <option value="medium">较稳定（大型企业核心岗）</option>
+        <option value="unstable">一般（中小企/绩效占比高）</option>
+        <option value="risky">不稳定（自由职业/创业/销售）</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">子女人数</label>
+      <select id="children" onchange="savePage(1)">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">赡养父母人数</label>
+      <select id="parents" onchange="savePage(1)">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">💰</span> 家庭财务状况</div>
+
+    <div class="form-group">
+      <label class="form-label">房贷余额（万元）<span class="hint">没有填0</span></label>
+      <input type="number" id="mortgage" min="0" step="1" value="0" onchange="savePage(1)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">房贷剩余还款年限</label>
+      <input type="number" id="mortgageYears" min="0" step="1" value="0" onchange="savePage(1)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">其他贷款合计（万元）</label>
+      <input type="number" id="otherLoan" min="0" step="1" value="0" onchange="savePage(1)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">银行存款（活期+定期）</label>
+      <select id="bankDeposit" onchange="savePage(1)">
+        <option value="">请选择</option>
+        <option value="2.5">5万以下</option>
+        <option value="12.5">5-20万</option>
+        <option value="35">20-50万</option>
+        <option value="75">50万以上</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">低风险理财（可随时赎回）</label>
+      <select id="lowRiskInvest" onchange="savePage(1)">
+        <option value="">请选择</option>
+        <option value="0">无</option>
+        <option value="2.5">5万以内</option>
+        <option value="12.5">5-20万</option>
+        <option value="35">20-50万</option>
+        <option value="75">50万以上</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">家庭年度刚性开销</label>
+      <select id="annualExpense" onchange="savePage(1)">
+        <option value="">请选择</option>
+        <option value="2.5">5万以下</option>
+        <option value="7.5">5-10万</option>
+        <option value="15">10-20万</option>
+        <option value="35">20-50万</option>
+        <option value="75">50万以上</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 页面3：健康险 ===== -->
+<div class="page" id="page2">
+  <div class="card">
+    <div class="card-title"><span class="icon">🏥</span> 现有健康保障盘点</div>
+    <p style="font-size:14px;color:#64748b;margin-bottom:16px;">请勾选每位成员拥有的保障类型</p>
+
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <thead>
+        <tr style="background:#f8fafc;">
+          <th style="padding:8px;text-align:left;">保障类型</th>
+          <th style="padding:8px;text-align:center;">本人</th>
+          <th style="padding:8px;text-align:center;">配偶</th>
+          <th style="padding:8px;text-align:center;">子女</th>
+          <th style="padding:8px;text-align:center;">父母</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:6px 8px;">社保医保</td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p1_social" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p2_social" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_child_social" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_parent_social" onchange="savePage(2)"></td>
+        </tr>
+        <tr><td style="padding:6px 8px;">百万医疗险</td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p1_med" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p2_med" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_child_med" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_parent_med" onchange="savePage(2)"></td>
+        </tr>
+        <tr><td style="padding:6px 8px;">中/高端医疗险</td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p1_highmed" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p2_highmed" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_child_highmed" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_parent_highmed" onchange="savePage(2)"></td>
+        </tr>
+        <tr><td style="padding:6px 8px;">重疾险</td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p1_ci" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p2_ci" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_child_ci" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_parent_ci" onchange="savePage(2)"></td>
+        </tr>
+        <tr><td style="padding:6px 8px;">意外险</td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p1_acc" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_p2_acc" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_child_acc" onchange="savePage(2)"></td>
+          <td style="text-align:center;"><input type="checkbox" id="h_parent_acc" onchange="savePage(2)"></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📋</span> 重疾险详情</div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 已有重疾险保额（万元）</label>
+      <input type="number" id="p1_ci_amount" min="0" step="5" value="0" onchange="savePage(2)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 重疾险保障期限</label>
+      <select id="p1_ci_term" onchange="savePage(2)">
+        <option value="">请选择</option>
+        <option value="70">保至70岁</option>
+        <option value="终身">保终身</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="p2_ci_group">
+      <label class="form-label">第二经济支柱 - 已有重疾险保额（万元）</label>
+      <input type="number" id="p2_ci_amount" min="0" step="5" value="0" onchange="savePage(2)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">子女 - 已有重疾险保额（万元）</label>
+      <input type="number" id="child_ci_amount" min="0" step="5" value="0" onchange="savePage(2)">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">⚙️</span> 保障偏好</div>
+
+    <div class="form-group">
+      <label class="form-label">重疾险保障期偏好</label>
+      <select id="ci_term_pref" onchange="savePage(2)">
+        <option value="70">保至70岁（性价比优先）</option>
+        <option value="终身">保终身（全面保障）</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">医疗险保障期偏好</label>
+      <select id="med_term_pref" onchange="savePage(2)">
+        <option value="1年">一年期（灵活）</option>
+        <option value="20年">20年保证续保</option>
+        <option value="终身">终身保证续保</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 页面4：寿险 ===== -->
+<div class="page" id="page3">
+  <div class="card">
+    <div class="card-title"><span class="icon">🛡️</span> 寿险配置</div>
+
+    <div class="form-group">
+      <label class="form-label">家庭需要配置寿险的核心成员</label>
+      <select id="lifeWho" onchange="savePage(3)">
+        <option value="p1">仅第一经济支柱</option>
+        <option value="both">第一 + 第二经济支柱</option>
+        <option value="p2">仅第二经济支柱</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 已有寿险保额（万元）</label>
+      <input type="number" id="p1_life_amount" min="0" step="5" value="0" onchange="savePage(3)">
+    </div>
+
+    <div class="form-group" id="p2_life_group">
+      <label class="form-label">第二经济支柱 - 已有寿险保额（万元）</label>
+      <input type="number" id="p2_life_amount" min="0" step="5" value="0" onchange="savePage(3)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 偏好保障期限</label>
+      <select id="p1_life_term" onchange="savePage(3)">
+        <option value="60">保至60岁（覆盖退休前）</option>
+        <option value="65">保至65岁</option>
+        <option value="30">保至房贷还清/子女成年（约20-30年）</option>
+        <option value="终身">终身保障</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第二经济支柱 - 偏好保障期限</label>
+      <select id="p2_life_term" onchange="savePage(3)">
+        <option value="60">保至60岁（覆盖退休前）</option>
+        <option value="65">保至65岁</option>
+        <option value="30">保至房贷还清/子女成年（约20-30年）</option>
+        <option value="终身">终身保障</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 年度寿险预算（元）</label>
+      <input type="number" id="p1_life_budget" min="0" step="100" value="2000" onchange="savePage(3)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第二经济支柱 - 年度寿险预算（元）</label>
+      <input type="number" id="p2_life_budget" min="0" step="100" value="1000" onchange="savePage(3)">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📅</span> 健康险预算约束</div>
+
+    <div class="form-group">
+      <label class="form-label">家庭年度健康险总保费预算上限</label>
+      <select id="healthBudget" onchange="savePage(3)">
+        <option value="">请选择</option>
+        <option value="1500">3000元以内</option>
+        <option value="4500">3000-6000元</option>
+        <option value="8000">6000-10000元</option>
+        <option value="15000">10000-20000元</option>
+        <option value="25000">20000-30000元</option>
+        <option value="40000">30000元以上</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">长期险缴费偏好</label>
+      <select id="payPref" onchange="savePage(3)">
+        <option value="20">20年缴</option>
+        <option value="30">30年缴</option>
+        <option value="60">缴至60岁/退休</option>
+        <option value="趸交">一次缴清</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 页面5：养老金 ===== -->
+<div class="page" id="page4">
+  <div class="card">
+    <div class="card-title"><span class="icon">🌅</span> 养老金参数</div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 计划退休年龄</label>
+      <input type="number" id="p1_retire_age" min="50" max="70" value="60" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 退休生活年限</label>
+      <select id="p1_retire_years" onchange="savePage(4)">
+        <option value="20">按80岁规划（约20年）</option>
+        <option value="25">按85岁规划（约25年）</option>
+        <option value="30">按90岁规划（约30年）</option>
+        <option value="35">按95岁规划（约35年）</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 退休后每年生活目标（万元）</label>
+      <select id="p1_retire_goal" onchange="savePage(4)">
+        <option value="">请选择</option>
+        <option value="3">5万以下（基础型）</option>
+        <option value="7.5">5-10万（舒适型）</option>
+        <option value="15">10-20万</option>
+        <option value="27.5">20-35万</option>
+        <option value="42.5">35-50万</option>
+        <option value="65">50万以上（品质型）</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="p2_retire_group">
+      <label class="form-label">第二经济支柱 - 计划退休年龄</label>
+      <input type="number" id="p2_retire_age" min="50" max="70" value="60" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group" id="p2_retire_years_group">
+      <label class="form-label">第二经济支柱 - 退休生活年限</label>
+      <select id="p2_retire_years" onchange="savePage(4)">
+        <option value="20">按80岁规划（约20年）</option>
+        <option value="25">按85岁规划（约25年）</option>
+        <option value="30">按90岁规划（约30年）</option>
+        <option value="35">按95岁规划（约35年）</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="p2_retire_goal_group">
+      <label class="form-label">第二经济支柱 - 退休后每年生活目标（万元）</label>
+      <select id="p2_retire_goal" onchange="savePage(4)">
+        <option value="">请选择</option>
+        <option value="3">5万以下</option>
+        <option value="7.5">5-10万</option>
+        <option value="15">10-20万</option>
+        <option value="27.5">20-35万</option>
+        <option value="42.5">35-50万</option>
+        <option value="65">50万以上</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🏦</span> 已有养老储备</div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 可划入养老的存款/理财（万元）</label>
+      <input type="number" id="p1_pension_savings" min="0" step="1" value="0" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 现有商业养老金总额（万元）</label>
+      <input type="number" id="p1_pension_commercial" min="0" step="1" value="0" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 个人养老金账户余额（万元）</label>
+      <input type="number" id="p1_pension_personal" min="0" step="0.1" value="0" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 社保/企业月养老金估计（元）</label>
+      <select id="p1_pension_social" onchange="savePage(4)">
+        <option value="0">不太清楚（按0计算）</option>
+        <option value="2000">1000-3000元</option>
+        <option value="4000">3000-5000元</option>
+        <option value="6500">5000-8000元</option>
+        <option value="10000">8000元以上</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="p2_pension_savings_group">
+      <label class="form-label">第二经济支柱 - 可划入养老的存款/理财（万元）</label>
+      <input type="number" id="p2_pension_savings" min="0" step="1" value="0" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group" id="p2_pension_commercial_group">
+      <label class="form-label">第二经济支柱 - 现有商业养老金总额（万元）</label>
+      <input type="number" id="p2_pension_commercial" min="0" step="1" value="0" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group" id="p2_pension_personal_group">
+      <label class="form-label">第二经济支柱 - 个人养老金账户余额（万元）</label>
+      <input type="number" id="p2_pension_personal" min="0" step="0.1" value="0" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group" id="p2_pension_social_group">
+      <label class="form-label">第二经济支柱 - 社保/企业月养老金估计（元）</label>
+      <select id="p2_pension_social" onchange="savePage(4)">
+        <option value="0">不太清楚（按0计算）</option>
+        <option value="2000">1000-3000元</option>
+        <option value="4000">3000-5000元</option>
+        <option value="6500">5000-8000元</option>
+        <option value="10000">8000元以上</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📊</span> 养老金分层配置</div>
+
+    <div class="form-group">
+      <label class="form-label">回报率估计（%）</label>
+      <input type="number" id="returnRate" min="1" max="10" step="0.1" value="3" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">计划缴费年限</label>
+      <input type="number" id="p1_pension_years" min="1" max="30" value="20" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">第一经济支柱 - 年度养老金预算（元）</label>
+      <input type="number" id="p1_pension_budget" min="0" step="500" value="10000" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group" id="p2_pension_years_group">
+      <label class="form-label">第二经济支柱 - 计划缴费年限</label>
+      <input type="number" id="p2_pension_years" min="1" max="30" value="20" onchange="savePage(4)">
+    </div>
+
+    <div class="form-group" id="p2_pension_budget_group">
+      <label class="form-label">第二经济支柱 - 年度养老金预算（元）</label>
+      <input type="number" id="p2_pension_budget" min="0" step="500" value="5000" onchange="savePage(4)">
+    </div>
+  </div>
+</div>
+
+<!-- ===== 页面6：结果 ===== -->
+<div class="page" id="page5">
+  <div id="resultContent">
+    <!-- 由JS动态渲染 -->
+  </div>
+</div>
+
+<!-- ===== 底部按钮 ===== -->
+<div class="btn-group" id="navButtons">
+  <button class="btn btn-prev" id="btnPrev" onclick="prevPage()">← 上一步</button>
+  <button class="btn btn-next" id="btnNext" onclick="nextPage()">下一步 →</button>
+</div>
+
+<script>
+// ============================================================
+//  数据管理
+// ============================================================
+const TOTAL_PAGES = 6;
+let currentPage = 0;
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem('insuranceData')) || {}; } catch(e) { return {}; }
+}
+
+function saveData(data) {
+  localStorage.setItem('insuranceData', JSON.stringify(data));
+}
+
+function savePage(pageIdx) {
+  const data = getData();
+  // 收集当前页所有带 data-var 属性的输入
+  document.querySelectorAll(`#page${pageIdx} [id]`).forEach(el => {
+    const id = el.id;
+    if (el.type === 'checkbox') {
+      data[id] = el.checked;
+    } else {
+      data[id] = el.value;
+    }
+  });
+  saveData(data);
+}
+
+function loadPage(pageIdx) {
+  const data = getData();
+  document.querySelectorAll(`#page${pageIdx} [id]`).forEach(el => {
+    const id = el.id;
+    if (data[id] === undefined) return;
+    if (el.type === 'checkbox') {
+      el.checked = data[id];
+    } else {
+      el.value = data[id];
+    }
+  });
+  // 触发条件显示逻辑
+  toggleP2();
+}
+
+// ============================================================
+//  页面导航
+// ============================================================
+function goToPage(idx) {
+  // 保存当前页
+  if (currentPage > 0 && currentPage < 5) {
+    savePage(currentPage);
+  }
+
+  // 切换页面
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page${idx}`).classList.add('active');
+
+  // 更新进度条
+  document.querySelectorAll('.progress-step').forEach((s, i) => {
+    s.classList.toggle('active', i === idx);
+    s.classList.toggle('done', i < idx);
+  });
+  document.querySelectorAll('.progress-line').forEach(l => {
+    l.classList.toggle('done', parseInt(l.dataset.between.split('-')[1]) <= idx);
+  });
+
+  currentPage = idx;
+
+  // 加载目标页数据
+  if (idx > 0 && idx < 5) {
+    loadPage(idx);
+  }
+
+  // 按钮状态
+  document.getElementById('btnPrev').style.display = idx === 0 ? 'none' : 'block';
+  const nextBtn = document.getElementById('btnNext');
+  if (idx === 0) {
+    nextBtn.style.display = 'none';
+  } else if (idx === 5) {
+    nextBtn.style.display = 'none';
+    renderResults();
+  } else {
+    nextBtn.style.display = 'block';
+    nextBtn.textContent = idx === 4 ? '查看结果 →' : '下一步 →';
+  }
+
+  window.scrollTo(0, 0);
+}
+
+function nextPage() {
+  if (currentPage === 4) {
+    // 计算并显示结果
+    savePage(4);
+    goToPage(5);
+  } else if (currentPage < 5) {
+    savePage(currentPage);
+    goToPage(currentPage + 1);
+  }
+}
+
+function prevPage() {
+  if (currentPage > 0) {
+    savePage(currentPage);
+    goToPage(currentPage - 1);
+  }
+}
+
+// ============================================================
+//  条件显示逻辑
+// ============================================================
+function toggleP2() {
+  const val = document.getElementById('p2Exist').value;
+  const hasP2 = val && val !== 'no' && val !== '';
+  document.getElementById('p2IncomeGroup').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_ci_group').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_life_group').classList.toggle('hidden', !hasP2);
+
+  // 养老金的第二支柱字段
+  document.getElementById('p2_retire_group').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_retire_years_group').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_retire_goal_group').classList.toggle('hidden', !hasP2);
+
+  document.getElementById('p2_pension_savings_group').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_pension_commercial_group').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_pension_personal_group').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_pension_social_group').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_pension_years_group').classList.toggle('hidden', !hasP2);
+  document.getElementById('p2_pension_budget_group').classList.toggle('hidden', !hasP2);
+}
+
+// ============================================================
+//  计算逻辑
+// ============================================================
+function calcResults() {
+  const d = getData();
+
+  // ---- 辅助函数 ----
+  const num = (v, def=0) => { const n = parseFloat(v); return isNaN(n) ? def : n; };
+  const selectNum = (id, def=0) => num(d[id], def);
+  const selectBool = (id) => d[id] === true || d[id] === 'true';
+
+  // ---- 基本信息 ----
+  const p1Age = selectNum('p1Age', 35);
+  const p2Age = selectNum('p2Age', 35);
+  const p1Income = selectNum('p1Income', 22.5);
+  const p2Income = selectNum('p2Income', 7.5);
+  const children = selectNum('children', 0);
+  const parents = selectNum('parents', 0);
+  const hasP2 = d.p2Exist && d.p2Exist !== 'no' && d.p2Exist !== '';
+  const mortgage = selectNum('mortgage', 0);
+  const bankDep = selectNum('bankDeposit', 2.5);
+  const lowRisk = selectNum('lowRiskInvest', 0);
+
+  // ---- 重疾险建议保额 ----
+  function calcCIP1() {
+    // 根据收入确定保额基数
+    let base = 0;
+    if (p1Income < 15) base = 50;
+    else if (p1Income < 30) base = 80;
+    else if (p1Income < 60) base = 80;
+    else if (p1Income < 100) base = 80;
+    else base = 80;
+
+    // 实际上按Excel逻辑：收入档次对应
+    // <15万: 50, 15-30万: 100, 30-60万: 150, 60-100万: 200, 100万+: 300
+    // 但使用中间值计算
+    let recommend = 0;
+    if (p1Income < 15) recommend = 50;
+    else if (p1Income < 30) recommend = 100;
+    else if (p1Income < 60) recommend = 150;
+    else if (p1Income < 100) recommend = 200;
+    else recommend = 300;
+
+    // 收入稳定性调整
+    const stability = d.incomeStability || '';
+    if (stability === 'stable') recommend += 0;
+    else if (stability === 'medium') recommend += 20;
+    else if (stability === 'unstable') recommend += 30;
+    else if (stability === 'risky') recommend += 50;
+
+    // 子女加成
+    recommend += children * 30;
+
+    return recommend;
+  }
+
+  function calcCIP2() {
+    let recommend = 0;
+    const inc = p2Income;
+    if (inc <= 0) recommend = 0;
+    else if (inc < 15) recommend = 50;
+    else if (inc < 30) recommend = 80;
+    else recommend = 150;
+
+    // 子女加成减半（第二支柱）
+    recommend += children * 15;
+    return recommend;
+  }
+
+  // ---- 寿险建议保额 ----
+  function calcLifeP1() {
+    // 收入法：年收入 * 10 + 负债 - 流动资产
+    let base = p1Income * 10;
+    // 加上负债
+    base += mortgage;
+    base += selectNum('otherLoan', 0);
+    // 减流动资产
+    base -= bankDep;
+    base -= lowRisk;
+    // 子女教育
+    base += children * 30;
+    // 父母赡养
+    base += parents * 20;
+    // 最低保额
+    return Math.max(base, 50);
+  }
+
+  function calcLifeP2() {
+    if (!hasP2) return 0;
+    let base = p2Income * 10;
+    base += children * 15;
+    base += parents * 10;
+    base -= bankDep * 0.5;
+    return Math.max(base, 30);
+  }
+
+  // ---- 养老金计算 ----
+  function calcPension(person) {
+    const prefix = person === 'p1' ? 'p1' : 'p2';
+    const retireAge = num(d[`${prefix}_retire_age`], 60);
+    const retireYears = num(d[`${prefix}_retire_years`], 20);
+    const retireGoal = num(d[`${prefix}_retire_goal`], 10);
+    const savings = num(d[`${prefix}_pension_savings`], 0);
+    const commercial = num(d[`${prefix}_pension_commercial`], 0);
+    const personal = num(d[`${prefix}_pension_personal`], 0);
+    const socialMonthly = num(d[`${prefix}_pension_social`], 0);
+    const payYears = num(d[`${prefix}_pension_years`], 20);
+    const returnRate = num(d.returnRate, 3) / 100;
+
+    const currentAge = person === 'p1' ? p1Age : (hasP2 ? p2Age : 35);
+    const yearsToRetire = retireAge - currentAge;
+
+    // 退休首年需求终值
+    const inflation = 0.02; // 2%通胀
+    const needAtRetire = retireGoal * Math.pow(1 + inflation, yearsToRetire);
+
+    // 退休后总需求现值（退休时点）
+    const investRate = 0.03;
+    let totalNeed = 0;
+    if (investRate > 0) {
+      totalNeed = needAtRetire * (1 - Math.pow(1 + investRate, -retireYears)) / investRate;
+    } else {
+      totalNeed = needAtRetire * retireYears;
+    }
+
+    // 已有储备终值
+    let reserveFV = 0;
+    reserveFV += savings * Math.pow(1 + returnRate, yearsToRetire);
+    reserveFV += commercial * Math.pow(1 + returnRate, yearsToRetire);
+    reserveFV += personal * Math.pow(1 + returnRate, yearsToRetire);
+    // 社保养老金现值
+    const socialAnnual = socialMonthly * 12;
+    let socialPV = 0;
+    if (investRate > 0) {
+      socialPV = socialAnnual * (1 - Math.pow(1 + investRate, -retireYears)) / investRate;
+    }
+
+    const totalReserve = reserveFV + socialPV;
+
+    // 资金缺口
+    const gap = Math.max(0, totalNeed - totalReserve);
+
+    // 年补充投入 (PMT公式)
+    let annualInvest = 0;
+    if (gap > 0 && returnRate > 0 && payYears > 0) {
+      annualInvest = gap * returnRate / (Math.pow(1 + returnRate, payYears) - 1);
+    }
+
+    return {
+      needAtRetire: Math.round(needAtRetire * 100) / 100,
+      totalNeed: Math.round(totalNeed * 100) / 100,
+      totalReserve: Math.round(totalReserve * 100) / 100,
+      gap: Math.round(gap * 100) / 100,
+      annualInvest: Math.round(annualInvest * 100) / 100
+    };
+  }
+
+  // ---- 结果汇总 ----
+  const ciP1 = calcCIP1();
+  const ciP2 = calcCIP2();
+  const ciP1Existing = selectNum('p1_ci_amount', 0);
+  const ciP2Existing = hasP2 ? selectNum('p2_ci_amount', 0) : 0;
+  const childCIExisting = selectNum('child_ci_amount', 0);
+
+  const lifeP1 = calcLifeP1();
+  const lifeP2 = calcLifeP2();
+  const lifeP1Existing = selectNum('p1_life_amount', 0);
+  const lifeP2Existing = hasP2 ? selectNum('p2_life_amount', 0) : 0;
+
+  const pensionP1 = calcPension('p1');
+  const pensionP2 = hasP2 ? calcPension('p2') : null;
+
+  // 医疗险建议
+  function getMedAdvice(person) {
+    const socialKey = `h_${person}_social`;
+    const medKey = `h_${person}_med`;
+    const highmedKey = `h_${person}_highmed`;
+    const existing = [socialKey, medKey, highmedKey].filter(k => selectBool(k));
+
+    // 检查是否已有保障
+    if (person === 'p1' || person === 'p2') {
+      if (!selectBool(socialKey)) {
+        return { type: '建议配置社保医保', priority: '高' };
+      }
+      if (!selectBool(medKey) && !selectBool(highmedKey)) {
+        return { type: '建议配置百万医疗险', priority: '高' };
+      }
+      if (!selectBool(highmedKey)) {
+        return { type: '已有百万医疗，可升级至中高端医疗', priority: '中' };
+      }
+      return { type: '保障较完善', priority: '低' };
+    }
+    if (person === 'child') {
+      if (!selectBool(medKey) && !selectBool(highmedKey)) {
+        return { type: '建议配置百万医疗险', priority: '高' };
+      }
+      return { type: '已有保障', priority: '低' };
+    }
+    if (person === 'parent') {
+      return { type: '建议配置百万医疗/防癌医疗+意外险', priority: '高' };
+    }
+    return { type: '评估中', priority: '中' };
+  }
+
+  // 意外险建议
+  function getAccAdvice(person) {
+    const accKey = `h_${person}_acc`;
+    if (!selectBool(accKey)) {
+      if (person === 'p1' || person === 'p2') return { amount: 100, note: '建议配置100万意外险' };
+      if (person === 'child') return { amount: 20, note: '建议配置20万意外险' };
+      if (person === 'parent') return { amount: 20, note: '建议配置20万意外险/人' };
+    }
+    return { amount: 0, note: '已有意外险' };
+  }
+
+  // 预算估算
+  const healthBudget = selectNum('healthBudget', 15000);
+  const lifeBudgetP1 = selectNum('p1_life_budget', 2000);
+  const lifeBudgetP2 = selectNum('p2_life_budget', 1000);
+  const pensionBudgetP1 = selectNum('p1_pension_budget', 10000);
+  const pensionBudgetP2 = hasP2 ? selectNum('p2_pension_budget', 5000) : 0;
+
+  // 估算保费（重疾≈保额*0.03, 寿险≈保额*0.001）
+  const ciPremiumP1 = Math.max(0, ciP1 - ciP1Existing) * 0.03 * 10000;
+  const ciPremiumP2 = Math.max(0, ciP2 - ciP2Existing) * 0.03 * 10000;
+  const lifePremiumP1 = Math.max(0, lifeP1 - lifeP1Existing) * 0.001 * 10000;
+  const lifePremiumP2 = Math.max(0, lifeP2 - lifeP2Existing) * 0.001 * 10000;
+
+  const totalHealthPremium = ciPremiumP1 + ciPremiumP2;
+  const totalLifePremium = lifePremiumP1 + lifePremiumP2;
+  const totalPensionPremium = (pensionP1.annualInvest * 10000) + (pensionP2 ? pensionP2.annualInvest * 10000 : 0);
+  const grandTotal = totalHealthPremium + totalLifePremium + totalPensionPremium;
+
+  return {
+    p1: {
+      age: p1Age,
+      income: p1Income,
+      ci: { recommend: ciP1, existing: ciP1Existing, gap: Math.max(0, ciP1 - ciP1Existing) },
+      life: { recommend: Math.round(lifeP1), existing: lifeP1Existing, gap: Math.max(0, Math.round(lifeP1 - lifeP1Existing)) },
+      med: getMedAdvice('p1'),
+      acc: getAccAdvice('p1'),
+      pension: pensionP1,
+      premium: { ci: ciPremiumP1, life: lifePremiumP1 },
+      lifeBudget: lifeBudgetP1,
+      pensionBudget: pensionBudgetP1
+    },
+    p2: hasP2 ? {
+      age: p2Age,
+      income: p2Income,
+      ci: { recommend: ciP2, existing: ciP2Existing, gap: Math.max(0, ciP2 - ciP2Existing) },
+      life: { recommend: Math.round(lifeP2), existing: lifeP2Existing, gap: Math.max(0, Math.round(lifeP2 - lifeP2Existing)) },
+      med: getMedAdvice('p2'),
+      acc: getAccAdvice('p2'),
+      pension: pensionP2,
+      premium: { ci: ciPremiumP2, life: lifePremiumP2 },
+      lifeBudget: lifeBudgetP2,
+      pensionBudget: pensionBudgetP2
+    } : null,
+    child: {
+      ci: { recommend: 80, existing: childCIExisting, gap: Math.max(0, 80 - childCIExisting) },
+      med: getMedAdvice('child'),
+      acc: getAccAdvice('child'),
+      life: { note: '不推荐（无收入，寿险非必需）' }
+    },
+    parent: {
+      ci: { recommend: 0, existing: 0, gap: 0, note: '不推荐重疾险（年龄较大费率过高）' },
+      med: getMedAdvice('parent'),
+      acc: getAccAdvice('parent'),
+      life: { note: '不推荐（无收入，寿险非必需）' },
+      pension: { note: '不推荐（已退休，养老金非必需）' }
+    },
+    budget: {
+      health: healthBudget,
+      healthTotal: Math.round(totalHealthPremium),
+      lifeTotal: Math.round(totalLifePremium),
+      pensionTotal: Math.round(totalPensionPremium),
+      grandTotal: Math.round(grandTotal),
+      healthOk: totalHealthPremium <= healthBudget,
+      lifeOkP1: lifePremiumP1 <= lifeBudgetP1,
+      lifeOkP2: hasP2 ? lifePremiumP2 <= lifeBudgetP2 : true,
+      pensionOkP1: (pensionP1.annualInvest * 10000) <= pensionBudgetP1,
+      pensionOkP2: hasP2 ? (pensionP2.annualInvest * 10000) <= pensionBudgetP2 : true
+    },
+    config: { p1Age, p2Age: hasP2 ? p2Age : null, children, parents, mortgage, hasP2 }
+  };
+}
+
+// ============================================================
+//  结果渲染
+// ============================================================
+function renderResults() {
+  const r = calcResults();
+  const container = document.getElementById('resultContent');
+  let html = '';
+
+  // ---- 家庭摘要 ----
+  html += `<div class="card"><div class="card-title"><span class="icon">📋</span> 家庭信息摘要</div>`;
+  html += `<div class="result-row"><span class="label">第一经济支柱年龄</span><span class="value">${r.config.p1Age}岁</span></div>`;
+  if (r.config.hasP2) {
+    html += `<div class="result-row"><span class="label">第二经济支柱年龄</span><span class="value">${r.config.p2Age}岁</span></div>`;
+  }
+  html += `<div class="result-row"><span class="label">子女数 / 父母赡养</span><span class="value">${r.config.children}人 / ${r.config.parents}人</span></div>`;
+  html += `<div class="result-row"><span class="label">房贷余额</span><span class="value">${r.config.mortgage}万元</span></div>`;
+  html += `</div>`;
+
+  // ---- 预算总览 ----
+  html += `<div class="card"><div class="card-title"><span class="icon">💰</span> 年度保费预算总览</div>`;
+  html += `<div class="budget-summary">
+    <div class="budget-item"><div class="amount ${r.budget.healthOk ? 'ok' : 'over'}">${r.budget.healthTotal.toLocaleString()}元</div><div class="desc">健康险预估</div></div>
+    <div class="budget-item"><div class="amount ${r.budget.lifeOkP1 ? 'ok' : 'over'}">${r.budget.lifeTotal.toLocaleString()}元</div><div class="desc">寿险预估</div></div>
+    <div class="budget-item"><div class="amount ${r.budget.pensionOkP1 ? 'ok' : 'over'}">${r.budget.pensionTotal.toLocaleString()}元</div><div class="desc">养老金预估</div></div>
+    <div class="budget-item"><div class="amount">${r.budget.grandTotal.toLocaleString()}元</div><div class="desc">总保费预估</div></div>
+  </div>`;
+  if (r.budget.healthTotal > r.budget.health) {
+    html += `<div class="result-warning">⚠️ 健康险预估保费(${r.budget.healthTotal.toLocaleString()}元)超出预算(${r.budget.health.toLocaleString()}元)，建议降低保额或延长缴费期</div>`;
+  } else {
+    html += `<div class="result-highlight">✅ 健康险预算充足</div>`;
+  }
+  html += `</div>`;
+
+  // ---- 第一经济支柱 ----
+  html += renderMemberSection('第一经济支柱', r.p1, r);
+
+  // ---- 第二经济支柱 ----
+  if (r.p2) {
+    html += renderMemberSection('第二经济支柱', r.p2, r);
+  }
+
+  // ---- 子女 ----
+  html += `<div class="result-member"><h3>👶 子女保险建议</h3>`;
+  html += `<div class="result-row"><span class="label">建议重疾险保额</span><span class="value">${r.child.ci.recommend}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">已有重疾险</span><span class="value">${r.child.ci.existing}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">重疾险缺口</span><span class="value ${r.child.ci.gap > 0 ? 'gap' : 'sufficient'}">${r.child.ci.gap}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">医疗险建议</span><span class="value">${r.child.med.type}</span></div>`;
+  html += `<div class="result-row"><span class="label">意外险</span><span class="value">${r.child.acc.note}</span></div>`;
+  html += `<div class="result-row"><span class="label">寿险</span><span class="value">${r.child.life.note}</span></div>`;
+  html += `</div>`;
+
+  // ---- 父母 ----
+  html += `<div class="result-member"><h3>👴 父母保险建议</h3>`;
+  html += `<div class="result-row"><span class="label">重疾险</span><span class="value">${r.parent.ci.note}</span></div>`;
+  html += `<div class="result-row"><span class="label">医疗险建议</span><span class="value">${r.parent.med.type}</span></div>`;
+  html += `<div class="result-row"><span class="label">意外险</span><span class="value">${r.parent.acc.note}</span></div>`;
+  html += `<div class="result-row"><span class="label">寿险</span><span class="value">${r.parent.life.note}</span></div>`;
+  html += `<div class="result-row"><span class="label">养老金</span><span class="value">${r.parent.pension.note}</span></div>`;
+  html += `</div>`;
+
+  // ---- 操作按钮 ----
+  html += `<div class="result-actions">
+    <button class="btn btn-prev" onclick="goToPage(1)">← 修改信息</button>
+    <button class="btn btn-save" onclick="window.print()">🖨️ 打印/保存报告</button>
+    <button class="btn btn-next" onclick="resetAll()">🔄 重新填写</button>
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+function renderMemberSection(title, member, r) {
+  let html = `<div class="result-member"><h3>👤 ${title}</h3>`;
+
+  // 重疾险
+  html += `<div class="result-section"><strong style="font-size:14px;color:#475569;">🏥 重疾险</strong>`;
+  html += `<div class="result-row"><span class="label">建议保额</span><span class="value">${member.ci.recommend}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">已有保额</span><span class="value">${member.ci.existing}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">保额缺口</span><span class="value ${member.ci.gap > 0 ? 'gap' : 'sufficient'}">${member.ci.gap}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">医疗险建议</span><span class="value">${member.med.type}</span></div>`;
+  html += `<div class="result-row"><span class="label">意外险</span><span class="value">${member.acc.note}</span></div>`;
+  html += `<div class="result-row"><span class="label">预估年保费</span><span class="value">${member.premium.ci.toLocaleString()}元</span></div>`;
+  if (member.premium.ci > 0) {
+    html += `<div class="result-row"><span class="label">预算检验</span><span class="value ${member.premium.ci * 0.3 <= r.budget.health ? 'sufficient' : 'gap'}">${member.premium.ci.toLocaleString()}元 / ${r.budget.health.toLocaleString()}元预算</span></div>`;
+  }
+  html += `</div>`;
+
+  // 寿险
+  html += `<div class="result-section"><strong style="font-size:14px;color:#475569;">🛡️ 寿险</strong>`;
+  html += `<div class="result-row"><span class="label">建议保额</span><span class="value">${member.life.recommend}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">已有保额</span><span class="value">${member.life.existing}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">保额缺口</span><span class="value ${member.life.gap > 0 ? 'gap' : 'sufficient'}">${member.life.gap}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">预估年保费</span><span class="value">${member.premium.life.toLocaleString()}元</span></div>`;
+  html += `<div class="result-row"><span class="label">预算检验</span><span class="value ${member.premium.life <= member.lifeBudget ? 'sufficient' : 'gap'}">${member.premium.life <= member.lifeBudget ? '✅ 预算充足' : '⚠️ 预算不足'}</span></div>`;
+  html += `<div class="result-row"><span class="label">期限建议</span><span class="value">推荐配置至65岁或终身</span></div>`;
+  html += `</div>`;
+
+  // 养老金
+  html += `<div class="result-section"><strong style="font-size:14px;color:#475569;">🌅 养老金</strong>`;
+  html += `<div class="result-row"><span class="label">退休首年需求终值</span><span class="value">${member.pension.needAtRetire}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">退休总需求现值</span><span class="value">${member.pension.totalNeed}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">已有储备终值</span><span class="value">${member.pension.totalReserve}万元</span></div>`;
+  html += `<div class="result-row"><span class="label">资金缺口</span><span class="value ${member.pension.gap > 0 ? 'gap' : 'sufficient'}">${member.pension.gap}万元</span></div>`;
+  if (member.pension.gap > 0) {
+    html += `<div class="result-row"><span class="label">建议年补充投入</span><span class="value">${member.pension.annualInvest.toFixed(0)}万元/年</span></div>`;
+    const annualInvestYuan = member.pension.annualInvest * 10000;
+    html += `<div class="result-row"><span class="label">预算检验</span><span class="value ${annualInvestYuan <= member.pensionBudget ? 'sufficient' : 'gap'}">${annualInvestYuan <= member.pensionBudget ? '✅ 预算充足' : '⚠️ 预算不足（建议' + member.pensionBudget.toLocaleString() + '元/年）'}</span></div>`;
+  } else {
+    html += `<div class="result-highlight">✅ 养老金储备充足，无需额外补充</div>`;
+  }
+  html += `</div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+// ============================================================
+//  重置
+// ============================================================
+function resetAll() {
+  if (confirm('确定要清空所有数据重新填写吗？')) {
+    localStorage.removeItem('insuranceData');
+    location.reload();
+  }
+}
+
+// ============================================================
+//  初始化
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // 加载已有数据到页面2-5
+  for (let i = 1; i <= 4; i++) {
+    loadPage(i);
+  }
+  toggleP2();
+});
+</script>
+</body>
+</html>
